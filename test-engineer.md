@@ -162,3 +162,24 @@ it('disables "Load More" on the last page', () => { ... })
 ```
 
 **Why:** When a multi-behavior test fails, you don't know which behavior broke. Single-behavior tests pinpoint regressions instantly.
+
+---
+
+## 9. Test input immutability for pure functions
+
+If a function takes data and returns new data, verify the original input is unchanged after the call. This is a caller expectation, not an implementation detail — callers assume their data is safe after passing it to a utility.
+
+**Violations:**
+- Testing only the return value without checking the input is still intact
+- Assuming immutability is guaranteed by the implementation
+
+**What to do instead:**
+```typescript
+it('does not mutate the original input', () => {
+  const input = { a: 1, b: 2, c: 3 }
+  filterKeys(input, ['b'])
+  expect(input).toEqual({ a: 1, b: 2, c: 3 })
+})
+```
+
+**Ask:** "If the caller uses this input again after the call, will it still be correct?" If that matters, write a test for it.
