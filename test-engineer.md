@@ -55,8 +55,10 @@ Default to unit tests. Only reach for integration or e2e tests when the value is
 **When integration/e2e is appropriate:**
 - Auth flows where cookies, redirects, and middleware interact
 - Database queries with complex joins or transactions
-- Multi-step workflows where the value is the orchestration
+- Multi-step workflows where the value is in the orchestration
 - UI flows where routing and state transitions are the behavior under test
+
+**Label them correctly.** If a test exercises multiple real modules together, it's an integration test — name it as such and put it in the right place. A unit test that leaks into a dependency's behavior is an unlabeled integration test. It has the downsides of both (brittle to internal changes, slow to diagnose failures) and the benefits of neither.
 
 **Rule of thumb:** If you can test it by calling a function and asserting on the return value, it's a unit test. Don't make it anything else.
 
