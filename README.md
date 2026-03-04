@@ -67,6 +67,7 @@ Then invoke it: `@test-critic review the tests in this PR`
 | File | Focus |
 |------|-------|
 | `test-engineer.md` | Test quality: behavior-driven tests, unit-first approach, pragmatic edge cases |
+| `ts-engineer.md` | TypeScript type safety: prove types through narrowing, canonical types, boundary validation |
 
 ## Design Principles
 
@@ -76,6 +77,6 @@ Then invoke it: `@test-critic review the tests in this PR`
 
 ## Roadmap
 
-- More rule files (security, error handling, TypeScript strictness, API design)
+- More rule files (security, error handling, API design)
 - `postinstall` script or CLAUDE.md integration for automatic inclusion
 - Publish as installable package across thegoodparty projects
