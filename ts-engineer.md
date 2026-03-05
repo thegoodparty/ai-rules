@@ -24,7 +24,10 @@ Types should be established by the code's structure — narrowing, validation, r
 - Immediately after decoding/parsing external data, localized to the boundary
 - Legacy code where the cost of full typing is disproportionate
 
-When an assertion is truly necessary, keep it as close to the boundary as possible. Never propagate asserted types through the rest of the app. Add a comment if it isn't immediately obvious why the assertion is safe.
+**If you must assert, follow this checklist:**
+1. Keep the assertion as close to the boundary as possible — in the same function that receives the untyped data
+2. Do not propagate the asserted type through the rest of the app — downstream code should receive a proven type from a boundary function, not relay an assertion
+3. Add a comment explaining why the assertion is safe if it isn't immediately obvious
 
 **Ask:** "Is this assertion covering up a real gap in the data, or is the type genuinely guaranteed here?" If you aren't sure, it's a gap.
 
@@ -46,7 +49,7 @@ When an assertion is truly necessary, keep it as close to the boundary as possib
 - Optional chaining with fallback: `ref.current?.focus()`
 - Explicit throw when absence is a bug: `const item = map.get(key) ?? throw new Error(...)`
 
-**Exception:** The `!` postfix on indexed access where `noUncheckedIndexedAccess` produces a false positive (e.g., inside a loop over `Object.keys(obj)` where the key is guaranteed to exist). Even then, prefer restructuring when practical.
+**Exception:** `!` on indexed access where `noUncheckedIndexedAccess` produces a false positive — for example, accessing `obj[key]` inside a `for` loop over `Object.keys(obj)` where the key is guaranteed to exist. This is the one scenario where the compiler genuinely cannot follow the logic. Even then, prefer restructuring (e.g., `Object.entries()`) when practical.
 
 **Ask:** "What happens at runtime if this value is actually null?" If the answer is "crash," handle the case explicitly.
 
@@ -85,6 +88,7 @@ const config: AppConfig = { apiUrl: '...', appName: '...' }
 ```
 - If keys come from a known union or enum, use `Record<ThatUnion, V>` — this is the intended use
 - If not every key is guaranteed to exist (caches, partial lookups, sparse data), use `Partial<Record<K, V>>`, `Map<K, V>`, or an index signature
+- If keys are truly open-ended and dynamic (user-generated IDs, arbitrary metadata), prefer `Map<string, V>` or an explicit index signature (`{ [key: string]: V }`) — these signal "dynamic lookup" rather than "known shape," and `Map` avoids prototype key collisions
 
 **Ask:** "Is every key in K guaranteed to have a value, or might some be missing?" If some may be missing, `Record<K, V>` misrepresents the data.
 
