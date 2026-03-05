@@ -67,6 +67,7 @@ Then invoke it: `@test-critic review the tests in this PR`
 | File | Focus |
 |------|-------|
 | `test-engineer.md` | Test quality: behavior-driven tests, unit-first approach, pragmatic edge cases |
+| `security.md` | Security: injection prevention, auth, secrets, dependencies, SSRF, cryptography |
 
 ## Design Principles
 
