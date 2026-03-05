@@ -169,7 +169,7 @@ Before defining a new type, check whether a canonical version already exists —
 
 **Violations:**
 - Declaring a local `interface User { id: string; name: string }` when a shared `User` type already exists
-- Copying an enum from a backend or shared package into a local file (`// copied from gp-api`)
+- Copying an enum from a backend or shared package into a local file (`// copied from <service>`)
 - Defining a type that partially overlaps an existing one instead of extending or reusing it
 - Creating a new type for an API response when the response type is already defined in a contracts package or typed API layer
 
