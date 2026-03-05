@@ -67,6 +67,7 @@ Then invoke it: `@test-critic review the tests in this PR`
 | File | Focus |
 |------|-------|
 | `test-engineer.md` | Test quality: behavior-driven tests, unit-first approach, pragmatic edge cases |
+| `code-duplication.md` | Duplication critic: search the codebase for existing code that does the same thing |
 
 ## Design Principles
 
