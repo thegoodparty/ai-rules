@@ -68,6 +68,7 @@ Then invoke it: `@test-critic review the tests in this PR`
 |------|-------|
 | `test-engineer.md` | Test quality: behavior-driven tests, unit-first approach, pragmatic edge cases |
 | `breaking-changes.md` | Breaking changes: trace callers of changed code, flag incompatible usage |
+| `code-duplication.md` | Duplication critic: search the codebase for existing code that does the same thing |
 | `security.md` | Security: injection prevention, auth, secrets, dependencies, SSRF, cryptography |
 | `ts-engineer.md` | TypeScript type safety: prove types through narrowing, canonical types, boundary validation |
 
