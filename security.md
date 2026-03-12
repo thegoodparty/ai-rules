@@ -86,6 +86,8 @@ Credentials, API keys, tokens, and connection strings do not belong in source co
 - Secrets in log output or error messages
 - Private keys or credentials in client-side JavaScript bundles
 - Secrets passed as command-line arguments (visible in process listings)
+- Secrets in E2E test fixtures, seed data, or Playwright/Cypress assets
+- AI-generated code output (e.g., from Copilot or Claude) that embeds example keys or credentials
 
 **What to do instead:**
 - Load secrets from environment variables or a secret manager (AWS Secrets Manager, Vault)
