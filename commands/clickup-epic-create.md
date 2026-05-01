@@ -73,9 +73,12 @@ Use the resolved values for all paths and commands throughout this workflow.
    - **Public repo URL** → clone shallowly into `$CLICKUP_REPOS_DIR/<repo-name>`:
      ```bash
      mkdir -p "$CLICKUP_REPOS_DIR"
-     [ -d "$CLICKUP_REPOS_DIR/<repo-name>" ] \
-       && (cd "$CLICKUP_REPOS_DIR/<repo-name>" && git pull --ff-only) \
-       || git clone --depth 50 <url> "$CLICKUP_REPOS_DIR/<repo-name>"
+     if [ -d "$CLICKUP_REPOS_DIR/<repo-name>/.git" ]; then
+       (cd "$CLICKUP_REPOS_DIR/<repo-name>" && git pull --ff-only) \
+         || echo "warn: git pull failed in $CLICKUP_REPOS_DIR/<repo-name>; using existing checkout as-is"
+     else
+       git clone --depth 50 <url> "$CLICKUP_REPOS_DIR/<repo-name>"
+     fi
      ```
    Remember the resolved local path as `$REPO_PATH` for the rest of the workflow.
 
