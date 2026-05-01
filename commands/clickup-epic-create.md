@@ -36,7 +36,7 @@ echo "CLICKUP_DRAFTS_DIR=${CLICKUP_DRAFTS_DIR:-$HOME/.claude/drafts/clickup}"
 echo "CLICKUP_PLANS_DIR=${CLICKUP_PLANS_DIR:-$HOME/.claude/plans}"
 echo "CLICKUP_REPOS_DIR=${CLICKUP_REPOS_DIR:-$HOME/.claude/repos}"
 echo "CLICKUP_EDITOR=${CLICKUP_EDITOR:-code}"
-echo "CLICKUP_API_KEY is ${CLICKUP_API_KEY:+set}${CLICKUP_API_KEY:-NOT SET}"
+if [ -n "$CLICKUP_API_KEY" ]; then echo "CLICKUP_API_KEY is set"; else echo "CLICKUP_API_KEY is NOT SET"; fi
 echo "CLICKUP_TEAM_ID=${CLICKUP_TEAM_ID:-<unset>}"
 echo "CLICKUP_LIST_ID=${CLICKUP_LIST_ID:-<unset>}"
 ```
