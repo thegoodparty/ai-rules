@@ -1,6 +1,6 @@
 # ai-rules
 
-Focused rule files for AI coding assistants (Claude Code, Cursor, etc.). Each file targets a specific engineering concern so critic agents can enforce standards without context overload.
+Focused rule files **and** Claude Code slash commands for AI coding assistants. Rule files target specific engineering concerns so critic agents can enforce standards without context overload. Commands wrap recurring workflows (creating ClickUp Epics from design docs, picking up tickets, etc.) so they're one slash away in any repo that uses this submodule.
 
 ## Usage
 
@@ -73,14 +73,76 @@ Then invoke it: `@test-critic review the tests in this PR`
 | `security.md` | Security: injection prevention, auth, secrets, dependencies, SSRF, cryptography |
 | `ts-engineer.md` | TypeScript type safety: prove types through narrowing, canonical types, boundary validation |
 
+## Slash Commands
+
+Markdown prompt-workflows under `commands/`. Each one becomes a `/<name>` slash command in Claude Code once installed.
+
+| Command                | Purpose                                                                       |
+| ---------------------- | ----------------------------------------------------------------------------- |
+| `clickup-epic-create`  | Generate a ClickUp Epic + Claude-Code-ready subtasks from a design doc + repo |
+| `clickup-epic-edit`    | Edit an existing Epic and its subtasks via a snapshot/diff/apply flow         |
+| `work-on-clickup`      | Pull a ClickUp task, load its plan, scope-confirm, and start implementation   |
+
+### Install
+
+```bash
+# Default: symlink into ~/.claude/commands (user-level, available in every project)
+./install.sh
+
+# Copy instead of symlink (no auto-update on `git submodule update`)
+./install.sh copy
+
+# Project-level only (./.claude/commands in the current repo)
+./install.sh symlink project
+
+# Overwrite an existing non-symlink at the destination
+./install.sh --force
+```
+
+If `ai-rules` is a submodule, the install path becomes `<project>/ai-rules/install.sh`. Run it once per machine — symlinks pick up updates automatically when the submodule is bumped. Re-runs are idempotent (already-correct symlinks are skipped). If a destination file exists and isn't a symlink we created, the script warns and skips unless you pass `--force`.
+
+#### Multi-profile setups (`CLAUDE_CONFIG_DIR`)
+
+If you run multiple Claude Code profiles via aliases like `CLAUDE_CONFIG_DIR=~/.claude-foo claude`, slash commands must live under that profile's commands dir, not `~/.claude/commands/`. The install script honors `CLAUDE_CONFIG_DIR` when set, so run it under the same env as the profile you're targeting:
+
+```bash
+CLAUDE_CONFIG_DIR=~/.claude-foo ./install.sh
+# or with an alias that already sets it:
+claude-foo-install   # if you alias `CLAUDE_CONFIG_DIR=~/.claude-foo /path/to/install.sh`
+```
+
+If you've installed into the wrong dir, just `rm` the stale symlinks (they're harmless but won't do anything for that profile) and re-run with the correct env.
+
+### Prerequisites
+
+The commands shell out to: `bash`, `curl`, `jq`, `ripgrep` (`rg`), `git`. `gh` is optional (only used by `/clickup-epic-create`'s investigate phase). Install on macOS:
+
+```bash
+brew install jq ripgrep gh
+```
+
+### Required env vars
+
+Set these in your shell profile (`~/.zshrc` / `~/.bashrc`):
+
+```bash
+export CLICKUP_API_KEY="pk_..."     # ClickUp → Settings → Apps → API Token
+export CLICKUP_TEAM_ID="..."        # optional: skips a prompt
+export CLICKUP_LIST_ID="..."        # optional: skips a prompt
+```
+
+Optional overrides: `CLICKUP_DRAFTS_DIR` (default `~/.claude/drafts/clickup`), `CLICKUP_PLANS_DIR` (default `~/.claude/plans`), `CLICKUP_REPOS_DIR` (default `~/.claude/repos`), `CLICKUP_EDITOR` (default `code`).
+
+**Never commit your `CLICKUP_API_KEY` or any other secret to this repo.**
+
 ## Design Principles
 
-- **One concern per file** — Each rule file covers a single engineering discipline
-- **Actionable, not aspirational** — Rules should let an agent give a clear pass/fail verdict on a piece of code
-- **Opinionated** — Generic advice ("write good tests") is useless. These rules take a stance.
+- **One concern per file** — Each rule or command file covers a single engineering discipline or workflow
+- **Actionable, not aspirational** — Rules should let an agent give a clear pass/fail verdict; commands should produce a concrete artifact, not advice
+- **Opinionated** — Generic advice ("write good tests") is useless. These files take a stance.
 
 ## Roadmap
 
-- More rule files (security, error handling, API design)
-- `postinstall` script or CLAUDE.md integration for automatic inclusion
-- Publish as installable package across thegoodparty projects
+- More rule files (error handling, API design)
+- More commands (PR review automation, test scaffolding, plan execution)
+- `postinstall` hook or CLAUDE.md integration so submodule update auto-installs new commands
