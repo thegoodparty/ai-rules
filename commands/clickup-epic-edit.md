@@ -143,7 +143,7 @@ Read env vars and apply defaults exactly as in `/clickup-epic-create`. If `CLICK
 
 14. **Update the Epic** if changed:
     ```bash
-    EPIC_BODY="$(awk '/^---$/{n++; next} n>=2' epic.md)"
+    EPIC_BODY="$(awk '/^---$/ && n<2 {n++; next} n>=2' epic.md)"
     PAYLOAD="$(jq -n --arg name "$EPIC_NAME" --arg desc "$EPIC_BODY" \
       '{name: $name, markdown_description: $desc}')"
     curl -s -X PUT \
@@ -155,7 +155,7 @@ Read env vars and apply defaults exactly as in `/clickup-epic-create`. If `CLICK
 
 15. **Update each changed task:**
     ```bash
-    TASK_BODY="$(awk '/^---$/{n++; next} n>=2' "tasks/$file")"
+    TASK_BODY="$(awk '/^---$/ && n<2 {n++; next} n>=2' "tasks/$file")"
     PAYLOAD="$(
       jq -n \
         --arg name "$TASK_TITLE" \

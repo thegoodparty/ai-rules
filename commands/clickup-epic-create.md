@@ -347,7 +347,8 @@ Use the resolved values for all paths and commands throughout this workflow.
 20. **Create the Epic.** POST to the target list. If `epicCustomItemId` is set in the frontmatter, include it; otherwise create a regular task.
 
     ```bash
-    EPIC_BODY="$(awk '/^---$/{n++; next} n>=2' epic.md)"   # strip frontmatter
+    # Strip frontmatter only — `n<2` guard prevents body `---` (horizontal rules) from being eaten.
+    EPIC_BODY="$(awk '/^---$/ && n<2 {n++; next} n>=2' epic.md)"
 
     PAYLOAD="$(
       jq -n \
@@ -375,7 +376,7 @@ Use the resolved values for all paths and commands throughout this workflow.
 21. **Create each Task** as a subtask of the Epic, in `order` order. Map priority strings to ClickUp's 1–4 scale: `urgent=1`, `high=2`, `normal=3`, `low=4`. **Don't** send `tags` on create — many workspaces silently drop unknown tags via this field. Attach tags in step 22 instead.
 
     ```bash
-    TASK_BODY="$(awk '/^---$/{n++; next} n>=2' "tasks/$file")"
+    TASK_BODY="$(awk '/^---$/ && n<2 {n++; next} n>=2' "tasks/$file")"
 
     PAYLOAD="$(
       jq -n \
