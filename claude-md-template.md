@@ -4,7 +4,7 @@ Use this template when creating or upgrading a root `CLAUDE.md` for any GoodPart
 
 ---
 
-```markdown
+````markdown
 # CLAUDE.md
 
 Guidance for Claude Code and other AI agents working in `{{repo-name}}`. Keep this file short — push detail into `docs/`.
@@ -15,7 +15,7 @@ Guidance for Claude Code and other AI agents working in `{{repo-name}}`. Keep th
 
 ## Commands (most-used first)
 
-\```bash
+```bash
 {{dev-server-command}}          # Dev server
 {{verify-command}}              # Full verification (lint + typecheck + test)
 {{test-command}}                # Tests only
@@ -23,7 +23,7 @@ Guidance for Claude Code and other AI agents working in `{{repo-name}}`. Keep th
 {{lint-command}}                # Lint
 {{lint-fix-command}}            # Auto-fix lint
 {{build-command}}               # Production build
-\```
+```
 
 {{additional commands as needed — migrations, code generation, deploy}}
 
@@ -52,9 +52,9 @@ Guidance for Claude Code and other AI agents working in `{{repo-name}}`. Keep th
 
 {{describe the standard directory layout for a feature/module — show the tree}}
 
-\```
+```
 {{directory tree example}}
-\```
+```
 
 `{{reference-module}}` is a clean reference to copy.
 
@@ -68,13 +68,13 @@ Full guide: `docs/writing-tests.md`
 
 ## Never
 
-- {{list of things agents must never do in this repo}}
-- Never edit applied migration files
-- Never disable critical lint rules without justification
+- {{repo-specific prohibitions — list things agents must never do here}}
+- {{e.g., "Never edit applied migration files"}}
+- {{e.g., "Never disable critical lint rules without justification"}}
 
 ## Environment
 
 - {{runtime and version, e.g. "Node 22.12.0 (`.nvmrc`)"}}
 - {{package manager and version}}
 - {{other env notes}}
-```
+````

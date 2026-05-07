@@ -19,7 +19,7 @@ Step-by-step checklist for making a GoodParty repo Claude-friendly. Use the temp
 
 ### 3. Nested CLAUDE.md files
 
-- [ ] Identify the top 3-5 most-edited directories (use `git log --format= --name-only | head -500 | xargs dirname | sort | uniq -c | sort -rn`)
+- [ ] Identify the top 3-5 most-edited directories (use `git log --format= --name-only | head -500 | xargs -n1 dirname | sort | uniq -c | sort -rn`)
 - [ ] Create `CLAUDE.md` in each using `nested-claude-md-template.md`
 - [ ] Keep each under 80 lines
 
@@ -32,7 +32,9 @@ Step-by-step checklist for making a GoodParty repo Claude-friendly. Use the temp
 ### 5. ai-rules submodule
 
 - [ ] Add ai-rules as a git submodule: `git submodule add https://github.com/thegoodparty/ai-rules.git ai-rules`
-- [ ] Add a `postinstall` script to auto-init: `"postinstall": "git submodule update --init --recursive"`
+- [ ] Wire up auto-init so contributors don't have to remember:
+  - **Node repos:** add `"postinstall": "git submodule update --init --recursive"` to `package.json`
+  - **Python (uv) repos:** add a `Makefile` `init` target (`git submodule update --init --recursive`) and call it from your bootstrap script, or use a uv `[tool.uv]` post-sync hook if available
 - [ ] Reference ai-rules in CLAUDE.md's pointer table
 
 ### 6. Skills directory

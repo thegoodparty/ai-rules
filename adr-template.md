@@ -4,7 +4,7 @@ Use this template for Architecture Decision Records in `docs/adr/`. File naming:
 
 ---
 
-```markdown
+````markdown
 # ADR-{{NNNN}}: {{Title}}
 
 ## Status
@@ -34,4 +34,4 @@ Use this template for Architecture Decision Records in `docs/adr/`. File naming:
 ### Neutral
 
 - {{side effect or note that is neither clearly positive nor negative}}
-```
+````

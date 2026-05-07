@@ -4,7 +4,7 @@ Use this template for `CLAUDE.md` files inside subdirectories (e.g., `src/users/
 
 ---
 
-```markdown
+````markdown
 # {{module-name}}
 
 {{one-line purpose of this module}}
@@ -38,4 +38,4 @@ Use this template for `CLAUDE.md` files inside subdirectories (e.g., `src/users/
 ## Related modules
 
 - `{{related-module}}` — {{why it's related, e.g., "shares the Campaign model"}}
-```
+````

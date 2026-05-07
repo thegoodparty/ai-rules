@@ -1,46 +1,22 @@
 # System Map
 
-How GoodParty's services connect. Arrow = "calls / depends on".
+How GoodParty's services connect. Arrow direction = "calls / depends on". The edge table below is the canonical reference; the diagram is a quick visual.
 
 ```
-                        ┌─────────────┐
-                        │  gp-webapp  │  Next.js frontend
-                        └──────┬──────┘
-                               │ REST (JWT cookie)
-                               ▼
-                        ┌─────────────┐
-               ┌───────▶│   gp-api    │◀──── gp-sdk (shared TS package)
-               │        └──┬──┬──┬────┘
-               │           │  │  │
-          SQS FIFO         │  │  │  HTTP (internal)
-          (status)         │  │  └──────────────────┐
-               │           │  │                     │
-               │           │  │ HTTP (internal)     │
-               ▼           │  ▼                     ▼
-  ┌─────────────────────┐  │ ┌──────────────┐ ┌──────────────┐
-  │campaign-plan-service│  │ │ election-api │ │  people-api  │
-  └─────────────────────┘  │ └──────────────┘ └──────────────┘
-         SQS FIFO ▲        │
-         (trigger)         │ HTTP
-                           ▼
-                   ┌────────────────┐
-                   │ gp-ai-projects │
-                   └────────────────┘
+   gp-webapp              ── REST (JWT cookie) ──▶  gp-api
+   gp-sdk                 ── shared TS types  ──▶  gp-api  (compile-time only)
 
-         ┌──────────────────┐
-         │ gp-data-platform │  ETL / shared Postgres
-         └──────────────────┘
-              ▲ reads from gp-api's DB
+   gp-api                 ── HTTP (internal)   ──▶  election-api
+   gp-api                 ── HTTP (S2S JWT)    ──▶  people-api
+   gp-api                 ── HTTP (internal)   ──▶  gp-ai-projects
 
-         ┌────────────────┐
-         │candidate-sites │  Static candidate pages (Next.js)
-         └────────────────┘
-              ▲ data from gp-api
+   gp-api                 ── SQS FIFO trigger  ──▶  campaign-plan-service
+   campaign-plan-service  ── SQS FIFO status   ──▶  gp-api
 
-         ┌──────────┐
-         │ ai-rules │  Org-wide AI context & review rules
-         └──────────┘
-              ▲ git submodule in gp-api (and other repos)
+   gp-data-platform       ── Postgres (read)   ──▶  gp-api DB
+   candidate-sites        ── REST              ──▶  gp-api
+
+   ai-rules               ── git submodule     ──▶  gp-api (and repos that opt in)
 ```
 
 ## Key edges
@@ -56,7 +32,7 @@ How GoodParty's services connect. Arrow = "calls / depends on".
 | gp-data-platform | gp-api DB | Postgres | Direct | ETL reads |
 | gp-sdk | gp-api | — | — | Shared TS types via `@goodparty_org/contracts` |
 | candidate-sites | gp-api | REST | — | Fetches candidate data |
-| ai-rules | (all repos) | git submodule | — | Review-time critics + context |
+| ai-rules | (consumer repos) | git submodule | — | Review-time critics + context; currently gp-api, rolling out to others |
 
 ## Repo count
 

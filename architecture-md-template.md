@@ -4,7 +4,7 @@ Use this template when creating `docs/architecture.md` for any GoodParty repo. R
 
 ---
 
-```markdown
+````markdown
 # Architecture
 
 A pointer-heavy doc. Detailed conventions live in `CLAUDE.md` and repo-specific rule files.
@@ -22,9 +22,9 @@ A pointer-heavy doc. Detailed conventions live in `CLAUDE.md` and repo-specific 
 
 {{describe the standard directory layout for a feature/module}}
 
-\```
+```
 {{directory tree example}}
-\```
+```
 
 `{{reference-module}}` is a clean reference module — start there if you need a pattern to copy.
 
@@ -56,4 +56,4 @@ Shared types flow through `{{contracts package or mechanism}}`.
 ## ADRs
 
 See `docs/adr/` for non-obvious decisions.
-```
+````
