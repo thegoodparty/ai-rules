@@ -1,22 +1,6 @@
 # ai-rules
 
-Two things: (1) review-time critics that enforce engineering standards, and (2) the org-wide AI context layer — system map, repo index, templates, and shared skills for onboarding repos to be Claude-friendly.
-
-## Context Layer
-
-Org-wide AI context that helps agents understand GoodParty's architecture before touching code.
-
-| File | Purpose |
-|------|---------|
-| `system-map.md` | How all 10 active repos connect (ASCII diagram + edge table) |
-| `repo-index.md` | Every repo at a glance — language, role, doc links |
-| `cross-repo-flows.md` | Multi-repo sequences (onboarding, plan generation, outreach, etc.) |
-| `claude-md-template.md` | Template for root `CLAUDE.md` in any repo |
-| `architecture-md-template.md` | Template for `docs/architecture.md` |
-| `nested-claude-md-template.md` | Template for subdirectory `CLAUDE.md` files (≤80 lines) |
-| `adr-template.md` | Template for Architecture Decision Records |
-| `onboarding-a-repo.md` | Step-by-step checklist for making a repo Claude-friendly |
-| `skills/` | Org-wide skills usable in any repo (code-review, security-check, pr-description) |
+Focused rule files for AI coding assistants (Claude Code, Cursor, etc.). Each file targets a specific engineering concern so critic agents can enforce standards without context overload.
 
 ## Usage
 
@@ -97,6 +81,6 @@ Then invoke it: `@test-critic review the tests in this PR`
 
 ## Roadmap
 
-- More rule files (error handling, API design)
+- More rule files (security, error handling, API design)
+- `postinstall` script or CLAUDE.md integration for automatic inclusion
 - Publish as installable package across thegoodparty projects
-- Additional org-wide skills as patterns emerge
