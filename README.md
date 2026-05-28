@@ -86,6 +86,8 @@ Then invoke it: `@test-critic review the tests in this PR`
 | `breaking-changes.md` | Breaking changes: trace callers of changed code, flag incompatible usage |
 | `bugs.md` | Bug detection: null access, async mistakes, logic errors, silent failures |
 | `code-duplication.md` | Duplication critic: search the codebase for existing code that does the same thing |
+| `performance.md` | Performance: real CPU cycles and roundtrips over Big-O, latency-adds, cache locality, allocations, render/network budgets |
+| `performance-tools.md` | Performance tooling cookbook: copy-paste commands for hyperfine, autocannon, `node --prof`, `EXPLAIN ANALYZE`, Lighthouse, bundle analysis |
 | `security.md` | Security: injection prevention, auth, secrets, dependencies, SSRF, cryptography |
 | `ts-engineer.md` | TypeScript type safety: prove types through narrowing, canonical types, boundary validation |
 
