@@ -410,7 +410,7 @@ Intuition about performance is wrong more often than it's right, especially in J
 **Critic expectations for any "performance" PR:**
 - A real measurement: wall-clock for a representative workload, or a CPU/heap profile, or production p50/p95/p99
 - A before/after number, not "it feels faster"
-- The hot path identified explicitly: "this function was 40% of CPU in the flame graph"
+- The hot path identified via a profile, not guessed: "this function was 40% of CPU in the flame graph"
 - Microbenchmarks are accepted only with: warmup, multiple iterations, realistic input shape, and a note about what JIT optimization tier they reached
 
 **Red flags in a performance PR:**
@@ -418,6 +418,8 @@ Intuition about performance is wrong more often than it's right, especially in J
 - A clever data-structure swap with no profile showing the original was the bottleneck
 - Premature parallelism (`Promise.all` on two awaits that take 2 ms each) that adds complexity for no measurable win
 - Optimizing a code path that runs once per day
+
+Without the above evidence, "perf" PRs are guesswork. Reject them or downgrade the claim to "refactor."
 
 **Tooling:** see [`performance-tools.md`](./performance-tools.md) for the copy-paste commands behind every measurement above (hyperfine, autocannon, `node --prof`, `EXPLAIN ANALYZE`, Lighthouse, bundle analysis). Most repos also ship convenience wrappers under `scripts/perf/`.
 
