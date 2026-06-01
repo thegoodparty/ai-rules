@@ -124,7 +124,8 @@ brew install k6
 
 **Run an existing scenario (people-api):**
 ```bash
-k6 run --summary-trend-stats "avg,med,p(50),p(95),p(99),min,max" perf/mixed.ts
+# --compatibility-mode=extended is required for .ts scenarios (default is `base` = ES5.1+ JS only).
+k6 run --compatibility-mode=extended --summary-trend-stats "avg,med,p(50),p(95),p(99),min,max" perf/mixed.ts
 ```
 
 **Read:** per-scenario thresholds (`http_req_duration`, `http_req_failed`), and the trend stats per checkpoint.
@@ -403,7 +404,7 @@ Plenty of environments are missing `brew`, missing global node tooling, run Post
 | `psql` | (rarely installed without effort) | `docker exec -i <container> psql -U <user> -d <db> -c "<query>"` |
 | `hyperfine` | `cargo install hyperfine`, or skip — there's no comparable one-line install elsewhere | — |
 | `source-map-explorer` | `npx --yes source-map-explorer '.next/static/chunks/**/*.js' --html out.html` | — |
-| `k6` | (binary install required — no npx equivalent) | `docker run --rm -i grafana/k6 run - <perf/scenario.ts` |
+| `k6` | (binary install required — no npx equivalent) | `docker run --rm -i grafana/k6 run --compatibility-mode=extended - <perf/scenario.ts` |
 | `node --cpu-prof` | Already shipped with `node`. **Do not** try to inject via `NODE_OPTIONS` — see §3b. | — |
 | Prisma query log | None — has to run as part of the app's own process. | — |
 
