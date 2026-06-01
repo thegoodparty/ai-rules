@@ -463,4 +463,9 @@ For each finding, use this format:
 
 **Process findings.** A "performance" PR that also bumps a shared dependency, a `git submodule` pointer, or a config file that affects every other consumer should call that out as a separate concern. Don't silently fold a global change into a perf fix — flag it so the change can be reviewed on its own terms (and so downstream consumers know to follow up).
 
-End with a verdict: **PASS** (no perf issues), **PASS WITH NOTES** (waste/concerns only), or **FAIL** (hotpath or slow issues that need to be fixed before merge).
+End with a verdict:
+
+- **PASS** — no perf issues found.
+- **PASS WITH NOTES** — waste/concerns only; no blocker.
+- **FAIL** — hotpath or slow issues that need to be fixed before merge.
+- **REFACTOR** — the PR claims a performance improvement but provides no measurements (no before/after, no profile, no production metric). The change may be fine as a refactor, but the perf claim is unsubstantiated; the developer should either back the claim with evidence or rewrite the PR title/description as a refactor before merge. (This is the verdict §11 means by "downgrade the claim to 'refactor.'")

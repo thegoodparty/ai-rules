@@ -314,7 +314,10 @@ npx --yes lighthouse ...
 **Run against a local production build:**
 ```bash
 npm run build && npm run start-local &
-sleep 5
+# Wait for the port to actually accept connections. `sleep 5` races on
+# cold starts (CI machines or large bundles can need 10–30s); polling is
+# correct everywhere `curl` is available, which is everywhere.
+until curl --silent --fail http://localhost:4000 > /dev/null 2>&1; do sleep 1; done
 lighthouse http://localhost:4000/some-route \
   --output json --output html \
   --output-path ./lhr \
@@ -336,7 +339,7 @@ lighthouse http://localhost:4000/some-route \
 
 Single biggest lever for frontend perf after server response time.
 
-**Requires:** built artifacts in `.next/static/`. `productionBrowserSourceMaps: true` must be set in `next.config.ts` (this repo already has it) — otherwise the explorer can't map chunks back to source modules. No global install needed; `npx` is fine.
+**Requires:** built artifacts in `.next/static/`. `productionBrowserSourceMaps: true` must be set in `next.config.ts` — verify this is present in your repo's config before running (some repos in the org have it, some don't). Without it the explorer can't map chunks back to source modules and you'll get opaque chunk names with no module breakdown. No global install needed; `npx` is fine.
 
 **Run (Next.js, source-map-explorer):**
 ```bash
@@ -465,6 +468,7 @@ A repo-shipped `scripts/perf/setup-check.sh` (when present) is the fastest way t
 | "Is array A faster than Map B at this N?" | mitata (§7) |
 | "Is this page fast for users?" | Lighthouse (§8) |
 | "What's making my bundle huge?" | source-map-explorer (§9) |
+| "What's actually happening end-to-end in the browser?" | Playwright trace + perf metrics (§10) |
 | "What's actually happening in prod?" | Datadog / Sentry / OTel (§11) |
 
 ---
