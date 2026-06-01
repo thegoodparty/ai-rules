@@ -15,6 +15,35 @@ Most repos also ship convenience wrappers under `scripts/perf/`. Prefer those wh
 
 ---
 
+## At a glance: tool readiness
+
+Use this table to pick a tool that fits the situation you're actually in (no running server, no global install, DB in Docker, etc.) without having to read each section first.
+
+The **Agent runtime** column tells an AI agent reviewing a PR what it can realistically run unattended:
+
+- **GREEN** — Agent can run it unattended if the basic env is present.
+- **YELLOW** — Needs a long-running service (built artifact, dev server, prod-like server) the agent should not start on its own.
+- **RED** — Needs human credentials (Datadog/Sentry/prod APM/observability backends).
+
+| § | Tool | Prereqs | Agent runtime |
+|---|---|---|---|
+| §0 | `hyperfine` | Binary on PATH (or `cargo install hyperfine`); two runnable commands to compare. | GREEN if installed; otherwise SKIP — heavy install. |
+| §1 | `autocannon` | Target HTTP server up; `autocannon` on PATH OR fallback to `npx --yes autocannon`. | YELLOW — needs the dev/prod server running. |
+| §2 | `k6` | `k6` on PATH; scenario file (`perf/*.ts`); target server up. | YELLOW — needs the server. |
+| §3 | `node --prof`, `--cpu-prof` | `node` on PATH; direct `node` invocation of the workload (NOT via `npm run` / `nest start` — see §3b gotcha). | GREEN for any script you can run directly. |
+| §4 | `--heap-prof`, `--trace-gc` | Same as §3. | GREEN. |
+| §5 | `EXPLAIN ANALYZE` | A Postgres connection. EITHER `psql` on PATH AND `DATABASE_URL` resolvable, OR a running container you can `docker exec ... psql` into. | GREEN when DB is up locally. |
+| §6 | Prisma query log | A running script/test that can construct a `PrismaClient`; usual Node + Prisma deps installed. | GREEN. |
+| §7 | `mitata` / `tinybench` | `npm install -D mitata` in the target repo; the function under test importable from a script. | GREEN. |
+| §8 | Lighthouse | Built production frontend listening on a URL; `lighthouse` on PATH OR `npx --yes lighthouse`. | YELLOW — `npm run build && npm run start-local` needed first. |
+| §9 | `source-map-explorer` / `@next/bundle-analyzer` | Built artifacts in `.next/static/`; `productionBrowserSourceMaps: true` in `next.config.ts`. No global install — `npx` always works. | YELLOW — needs a build, but no server. |
+| §10 | Playwright | Playwright installed (`npx playwright install`); test or page-evaluate target. | YELLOW — usually needs the app up. |
+| §11 | Datadog / Sentry / OTel | Org credentials, cluster access, IDP. | RED — never agent-unattended in a dev review. |
+
+> **For agents in a fresh git worktree** there's an extra setup tax — see §11.6 ("Agents in fresh worktrees") before assuming any of the YELLOW/GREEN tools will work first-try.
+
+---
+
 ## 0. Universal: hyperfine — "did my change help, with statistical confidence?"
 
 The single highest-leverage tool. Wraps any command, runs warmup + multiple iterations, reports mean / median / stddev / min / max. Use it to compare any two commits, branches, or scripts.
@@ -52,7 +81,11 @@ Single-endpoint load tester with rich latency stats. Best for "is endpoint X fas
 **Install:**
 ```bash
 npm i -g autocannon
+# or, no install needed:
+npx --yes autocannon ...
 ```
+
+**Requires:** the target HTTP server already listening on the URL (start `npm run start:dev` first). Without that you'll get a `0/0/0 reqs/sec` table with one connection error.
 
 **Run:**
 ```bash
@@ -126,7 +159,13 @@ node --cpu-prof --cpu-prof-dir=./profiles dist/main.js
 npx flamebearer < ./profiles/*.cpuprofile  # produces an HTML flame graph
 ```
 
-**Repo wrappers:** `scripts/perf/profile-cpu.sh` wraps both flows.
+> **Gotcha — `--cpu-prof` cannot be set via `NODE_OPTIONS`.** Node 18+ rejects it: `node: --cpu-prof is not allowed in NODE_OPTIONS`. You must pass the flag on the `node` command line directly. That means:
+>
+> - For a built app: `node --cpu-prof --cpu-prof-dir=./profiles dist/main.js` ✓
+> - For `npm run start:prod`, `nest start`, `next start`: **you cannot just `export NODE_OPTIONS`.** Either profile the underlying built JS directly (`dist/main.js`, `.next/standalone/server.js`), or temporarily edit the `package.json` script to inject the flag (`"start:prod:profile": "node --cpu-prof --cpu-prof-dir=./profiles dist/main.js"`).
+> - The same restriction applies to `--heap-prof`. `--prof` and `--trace-gc` ARE allowed in `NODE_OPTIONS`.
+
+**Repo wrappers:** `scripts/perf/profile-cpu.sh` wraps the direct-`node` flow.
 
 ---
 
@@ -154,9 +193,17 @@ node --trace-gc --trace-gc-verbose dist/main.js
 
 The definitive answer for any "this query is slow" question. Backs up `performance.md` rule 2.
 
+**Requires:** a Postgres connection. If `psql` isn't on your PATH but your DB is in Docker (common dev setup), `docker exec <container> psql ...` works identically — see §11.5 Fallback patterns. If you're in a fresh git worktree, `.env` is likely missing — see §11.6.
+
 **Run via psql:**
 ```bash
 psql "$DATABASE_URL" -c "EXPLAIN (ANALYZE, BUFFERS, VERBOSE) <your query here>;"
+```
+
+**Run via docker exec (when host `psql` isn't installed):**
+```bash
+docker exec -i goodparty-postgres psql -U postgres -d gpdb \
+  -c "EXPLAIN (ANALYZE, BUFFERS) <your query here>;"
 ```
 
 **Run via Prisma in a one-off script:**
@@ -240,7 +287,11 @@ For `gp-webapp` and any user-facing surface. Headless, JSON output, scriptable.
 **Install:**
 ```bash
 npm i -g lighthouse
+# or, no install needed:
+npx --yes lighthouse ...
 ```
+
+**Requires:** a built **production** server listening on the URL — not `npm run dev`. Build and start it first (`npm run build && npm run start-local &`). Lighthouse against a dev server gives meaningless numbers because dev mode disables minification and bundle splitting.
 
 **Run against a local production build:**
 ```bash
@@ -266,6 +317,8 @@ lighthouse http://localhost:4000/some-route \
 ## 9. Bundle analysis — "what's bloating my JS?"
 
 Single biggest lever for frontend perf after server response time.
+
+**Requires:** built artifacts in `.next/static/`. `productionBrowserSourceMaps: true` must be set in `next.config.ts` (this repo already has it) — otherwise the explorer can't map chunks back to source modules. No global install needed; `npx` is fine.
 
 **Run (Next.js, source-map-explorer):**
 ```bash
@@ -313,6 +366,62 @@ Real users beat synthetic benchmarks. If you have access:
 - **CloudWatch Logs Insights** — for AWS Lambda cold start times, duration distributions
 
 When investigating prod slowness, **always check telemetry first.** Local repro often misses cache effects, dataset shape, and concurrent load that production exposes.
+
+---
+
+## 11.5. Fallback patterns when your environment is missing the obvious
+
+Plenty of environments are missing `brew`, missing global node tooling, run Postgres in a container, or don't have direct `psql` on PATH. Most of the tools above have a workaround that costs ~30s to discover the hard way.
+
+| Tool | Without a global install | When the dep is in Docker |
+|---|---|---|
+| `autocannon` | `npx --yes autocannon -c 10 -d 30 http://...` | — |
+| `lighthouse` | `npx --yes lighthouse http://... --output html --output-path ./lhr` | — |
+| `psql` | (rarely installed without effort) | `docker exec -i <container> psql -U <user> -d <db> -c "<query>"` |
+| `hyperfine` | `cargo install hyperfine`, or skip — there's no comparable one-line install elsewhere | — |
+| `source-map-explorer` | `npx --yes source-map-explorer '.next/static/chunks/**/*.js' --html out.html` | — |
+| `k6` | (binary install required — no npx equivalent) | `docker run --rm -i grafana/k6 run - <perf/scenario.ts` |
+| `node --cpu-prof` | Already shipped with `node`. **Do not** try to inject via `NODE_OPTIONS` — see §3b. | — |
+| Prisma query log | None — has to run as part of the app's own process. | — |
+
+**Install hints by platform** (use whichever applies):
+
+| Tool | macOS | Debian/Ubuntu | Fedora/RHEL |
+|---|---|---|---|
+| `psql` (`libpq`) | `brew install libpq` | `apt install postgresql-client` | `dnf install postgresql` |
+| `hyperfine` | `brew install hyperfine` | `cargo install hyperfine` | `cargo install hyperfine` |
+| `k6` | `brew install k6` | `apt install k6` (Grafana apt repo) | (use Docker) |
+| `lighthouse` (preferred: `npx`) | `npm i -g lighthouse` | `npm i -g lighthouse` | `npm i -g lighthouse` |
+| `autocannon` (preferred: `npx`) | `npm i -g autocannon` | `npm i -g autocannon` | `npm i -g autocannon` |
+
+---
+
+## 11.6. Agents in fresh worktrees
+
+If an AI agent is reviewing or measuring inside a `git worktree`, two things bite *before* any of the tools above:
+
+1. **`.env` is usually NOT in the worktree.** It's `.gitignore`d, so a `worktree add` produces a checkout without it. To find one:
+   ```bash
+   # Locate the parent (superproject) worktree:
+   git worktree list | head -1
+   # Or, from a submodule:
+   git rev-parse --show-superproject-working-tree
+   # Then copy or symlink:
+   cp ../<parent-name>/.env .
+   # Or set DATABASE_URL inline:
+   export DATABASE_URL="$(grep '^DATABASE_URL=' ../<parent-name>/.env | cut -d= -f2- | tr -d '\"')"
+   ```
+2. **Submodules need initialization.** The `ai-rules/` submodule (containing this file) is not auto-checked-out in a new worktree:
+   ```bash
+   git submodule update --init --recursive
+   ```
+   And the submodule's commit pointer may pre-date a recent rule change — if `ai-rules/performance.md` looks stale or is missing, check it out at the branch you expect:
+   ```bash
+   (cd ai-rules && git fetch && git checkout origin/main)
+   ```
+3. **`node_modules` is per-worktree.** Anything that runs Node will fail without `npm install` first.
+
+A repo-shipped `scripts/perf/setup-check.sh` (when present) is the fastest way to verify all of the above in one shot — run it first.
 
 ---
 
