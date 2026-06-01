@@ -56,10 +56,16 @@ cargo install hyperfine       # Linux/anywhere with cargo
 
 **Run — compare two branches of a script:**
 ```bash
+# Use --prepare to switch branches BEFORE each timed run.
+# Do NOT use 'git stash && cmd' / 'git stash pop && cmd' as the two commands —
+# hyperfine runs them round-robin and the stash stack desyncs after the first
+# pair, silently benchmarking the same code on every subsequent iteration.
 hyperfine --warmup 3 --runs 20 \
-  'git stash && npm run my-script' \
-  'git stash pop && npm run my-script'
+  --prepare 'git checkout main'      'npm run my-script' \
+  --prepare 'git checkout my-branch' 'npm run my-script'
 ```
+
+Alternative: use `git worktree add ../old-version <commit>` for two independent directories, then `hyperfine '(cd ../old-version && npm run my-script)' '(cd . && npm run my-script)'`. This avoids checking out the other branch in your active working tree at all.
 
 **Run — compare two commands side by side:**
 ```bash
@@ -156,8 +162,10 @@ node --cpu-prof --cpu-prof-dir=./profiles dist/main.js
 **Read:** open the `.cpuprofile` in Chrome DevTools (Performance tab → Load profile), or generate a flame graph:
 
 ```bash
-npx flamebearer < ./profiles/*.cpuprofile  # produces an HTML flame graph
+npx speedscope ./profiles/*.cpuprofile   # opens an interactive flame graph in the browser
 ```
+
+> `speedscope` accepts `.cpuprofile` natively. `flamebearer` does not — it only takes preprocessed V8 isolate logs (the output of `node --prof-process --preprocess -j`), and its own README now points users at speedscope as the replacement.
 
 > **Gotcha — `--cpu-prof` cannot be set via `NODE_OPTIONS`.** Node 18+ rejects it: `node: --cpu-prof is not allowed in NODE_OPTIONS`. You must pass the flag on the `node` command line directly. That means:
 >
@@ -208,11 +216,17 @@ docker exec -i goodparty-postgres psql -U postgres -d gpdb \
 
 **Run via Prisma in a one-off script:**
 ```typescript
+// Parameterize every dynamic value — $1, $2, ... — never interpolate into
+// the SQL string. The static EXPLAIN prefix is fine; the query body must be
+// a fixed string literal you wrote, and any inputs become bound parameters.
 const result = await prisma.$queryRawUnsafe<unknown[]>(
-  `EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON) ${yourQuery}`,
+  'EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON) SELECT * FROM "User" WHERE id = $1',
+  userId,
 )
 console.log(JSON.stringify(result, null, 2))
 ```
+
+> **Do not** template-interpolate a query string into `$queryRawUnsafe` (`` `EXPLAIN ... ${yourQuery}` ``). That's the exact pattern `security.md` rule §1 flags as SQL injection. If you need to compose a query at runtime from user input, build it with `Prisma.sql\`...\`` and `prisma.$queryRaw` — both are parameterized at the driver level.
 
 **Read:**
 - `Seq Scan` on a large table ⇒ missing or unused index
@@ -351,7 +365,16 @@ npx playwright show-trace test-results/**/trace.zip
 
 For programmatic metrics:
 ```typescript
-const metrics = await page.evaluate(() => JSON.stringify(performance.toJSON()))
+// performance.toJSON() is a non-standard V8 convenience that returns ONLY
+// timeOrigin + timing — it does NOT include paint/navigation/layout entries
+// despite the convenient name. Use the entry-type APIs instead, and don't
+// JSON.stringify inside page.evaluate — Playwright structured-clones the
+// return value for you.
+const metrics = await page.evaluate(() => ({
+  navigation: performance.getEntriesByType('navigation')[0]?.toJSON(),
+  paint:      performance.getEntriesByType('paint').map((e) => e.toJSON()),
+  // Add 'resource' for per-asset timing, 'largest-contentful-paint' for LCP, etc.
+}))
 ```
 
 ---
