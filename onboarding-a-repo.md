@@ -4,9 +4,9 @@ Step-by-step checklist for making a GoodParty repo Claude-friendly. Use the temp
 
 ## Checklist
 
-### 1. Root CLAUDE.md
+### 1. Root AGENTS.md
 
-- [ ] Create `CLAUDE.md` at repo root using `claude-md-template.md`
+- [ ] Create `AGENTS.md` at repo root using `agents-md-template.md`
 - [ ] Fill in all `{{placeholders}}` with repo-specific values
 - [ ] Verify commands section — run each command to confirm they work
 - [ ] Add repo-specific pointer table rows
@@ -17,10 +17,10 @@ Step-by-step checklist for making a GoodParty repo Claude-friendly. Use the temp
 - [ ] Document the stack, module shape, auth, and cross-service edges
 - [ ] Add at least one reference module for agents to copy from
 
-### 3. Nested CLAUDE.md files
+### 3. Nested AGENTS.md files
 
 - [ ] Identify the top 3-5 most-edited directories (use `git log --format= --name-only | head -500 | xargs -n1 dirname | sort | uniq -c | sort -rn`)
-- [ ] Create `CLAUDE.md` in each using `nested-claude-md-template.md`
+- [ ] Create `AGENTS.md` in each using `nested-agents-md-template.md`
 - [ ] Keep each under 80 lines
 
 ### 4. ADR directory
@@ -35,7 +35,7 @@ Step-by-step checklist for making a GoodParty repo Claude-friendly. Use the temp
 - [ ] Wire up auto-init so contributors don't have to remember:
   - **Node repos:** add `"postinstall": "git submodule update --init --recursive"` to `package.json`
   - **Python (uv) repos:** add a `Makefile` `init` target (`git submodule update --init --recursive`) and call it from your bootstrap script, or use a uv `[tool.uv]` post-sync hook if available
-- [ ] Reference ai-rules in CLAUDE.md's pointer table
+- [ ] Reference ai-rules in AGENTS.md's pointer table
 
 ### 6. Skills directory
 
@@ -44,10 +44,14 @@ Step-by-step checklist for making a GoodParty repo Claude-friendly. Use the temp
 - [ ] Copy applicable org-wide skills from `ai-rules/skills/`
 - [ ] Add repo-specific skills as needed
 
-### 7. AGENTS.md (conditional)
+### 7. CLAUDE.md symlinks
 
-- [ ] **Only if** this repo is used with Cursor, Codex, or other AI tools besides Claude Code
-- [ ] Create `AGENTS.md` at repo root listing which tools are configured and how
+Claude Code reads `CLAUDE.md`; Cursor and Codex read `AGENTS.md`. Rather than keeping
+two copies in sync, every `AGENTS.md` gets a `CLAUDE.md` symlink beside it.
+
+- [ ] Run `ai-rules/scripts/agents-md-sync.sh --fix` to create the symlinks
+- [ ] Commit the result and confirm `git ls-files -s` shows mode `120000` for each `CLAUDE.md`
+- [ ] Add `ai-rules/scripts/agents-md-sync.sh --check` to CI so the invariant can't rot
 
 ## Skill Placement Decision Tree
 
@@ -69,7 +73,8 @@ Is this skill useful in every repo regardless of stack?
 
 After completing the checklist:
 
-1. Run `cat CLAUDE.md` and verify it reads well as a standalone onboarding doc
-2. Ask Claude Code: "What does this repo do and how do I run the tests?" — it should answer correctly from CLAUDE.md alone
+1. Run `cat AGENTS.md` and verify it reads well as a standalone onboarding doc
+2. Ask Claude Code: "What does this repo do and how do I run the tests?" — it should answer correctly from AGENTS.md alone
 3. Verify `ai-rules/` submodule is populated: `ls ai-rules/`
-4. Check line counts: `wc -l CLAUDE.md docs/architecture.md src/*/CLAUDE.md`
+4. Check line counts: `wc -l AGENTS.md docs/architecture.md src/*/AGENTS.md`
+5. Run `ai-rules/scripts/agents-md-sync.sh --check` — it should report OK

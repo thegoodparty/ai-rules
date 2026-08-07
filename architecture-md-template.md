@@ -7,7 +7,7 @@ Use this template when creating `docs/architecture.md` for any GoodParty repo. R
 ````markdown
 # Architecture
 
-A pointer-heavy doc. Detailed conventions live in `CLAUDE.md` and repo-specific rule files.
+A pointer-heavy doc. Detailed conventions live in `AGENTS.md` and repo-specific rule files.
 
 ## Stack
 

@@ -1,0 +1,32 @@
+name: agents-md-sync
+
+# agents-md-sync.sh rewrites and deletes files in every repo that vendors this one,
+# so it gets a regression suite of its own rather than being validated only by the
+# consumers that run it.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: agents-md-sync-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  test:
+    name: Test and lint agents-md-sync.sh
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Shellcheck
+        run: shellcheck scripts/agents-md-sync.sh scripts/agents-md-sync.test.sh
+
+      - name: Regression suite
+        run: bash scripts/agents-md-sync.test.sh

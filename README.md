@@ -11,12 +11,34 @@ Org-wide AI context that helps agents understand GoodParty's architecture before
 | `system-map.md` | How all 10 active repos connect (ASCII diagram + edge table) |
 | `repo-index.md` | Every repo at a glance — language, role, doc links |
 | `cross-repo-flows.md` | Multi-repo sequences (onboarding, plan generation, outreach, etc.) |
-| `claude-md-template.md` | Template for root `CLAUDE.md` in any repo |
+| `agents-md-template.md` | Template for root `AGENTS.md` in any repo |
 | `architecture-md-template.md` | Template for `docs/architecture.md` |
-| `nested-claude-md-template.md` | Template for subdirectory `CLAUDE.md` files (≤80 lines) |
+| `nested-agents-md-template.md` | Template for subdirectory `AGENTS.md` files (≤80 lines) |
 | `adr-template.md` | Template for Architecture Decision Records |
 | `onboarding-a-repo.md` | Step-by-step checklist for making a repo Claude-friendly |
+| `scripts/agents-md-sync.sh` | Enforces AGENTS.md as the source of truth (`--check` / `--fix`) |
 | `skills/` | Org-wide skills usable in any repo (code-review, security-check, pr-description) |
+
+## AGENTS.md is the source of truth
+
+Agent context docs live in `AGENTS.md`. Claude Code looks for `CLAUDE.md`, so every
+directory with an `AGENTS.md` also carries a `CLAUDE.md` **symlink** pointing at it.
+One file, one copy, no drift — and every tool reads the same content.
+
+```
+AGENTS.md    regular file, holds the content
+CLAUDE.md -> AGENTS.md
+```
+
+Never create `CLAUDE.md` by copying. Let the script do it:
+
+```bash
+ai-rules/scripts/agents-md-sync.sh --check   # CI runs this; exits 1 on violations
+ai-rules/scripts/agents-md-sync.sh --fix     # converts in place, idempotent
+```
+
+`--check` inspects the git index rather than the working tree, so a `CLAUDE.md`
+committed as a plain file from a machine without symlink support is still caught.
 
 ## Usage
 
@@ -55,9 +77,9 @@ Run a critic automatically on every commit or PR using [Claude Code hooks](https
 }
 ```
 
-### CLAUDE.md integration
+### AGENTS.md integration
 
-Reference rule files from your project's `CLAUDE.md` so they're always loaded:
+Reference rule files from your project's `AGENTS.md` so they're always loaded:
 
 ```markdown
 ## Code Review Rules

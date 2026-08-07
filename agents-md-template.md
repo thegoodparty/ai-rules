@@ -1,13 +1,15 @@
-# CLAUDE.md Template
+# AGENTS.md Template
 
-Use this template when creating or upgrading a root `CLAUDE.md` for any GoodParty repo. Replace `{{placeholders}}` with repo-specific values. Delete sections that don't apply.
+Use this template when creating or upgrading a root `AGENTS.md` for any GoodParty repo. Replace `{{placeholders}}` with repo-specific values. Delete sections that don't apply.
+
+`AGENTS.md` is the single source of truth. Every repo also carries a `CLAUDE.md` symlink beside it so Claude Code picks up the same content — create it with `ai-rules/scripts/agents-md-sync.sh --fix`, never by copying the file.
 
 ---
 
 ````markdown
-# CLAUDE.md
+# AGENTS.md
 
-Guidance for Claude Code and other AI agents working in `{{repo-name}}`. Keep this file short — push detail into `docs/`.
+Guidance for Claude Code, Cursor, Codex, and other AI agents working in `{{repo-name}}`. Keep this file short — push detail into `docs/`.
 
 ## Project
 
@@ -71,6 +73,7 @@ Full guide: `docs/writing-tests.md`
 - {{repo-specific prohibitions — list things agents must never do here}}
 - {{e.g., "Never edit applied migration files"}}
 - {{e.g., "Never disable critical lint rules without justification"}}
+- Never edit `CLAUDE.md` directly — it is a symlink to this file.
 
 ## Environment
 

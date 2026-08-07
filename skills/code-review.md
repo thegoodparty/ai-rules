@@ -12,7 +12,7 @@ Run this skill when you've finished a substantive code change and want a quality
 Review the code I just changed. For each file:
 
 1. Check for correctness: logic errors, off-by-one, null access, async mistakes
-2. Check for style: does it match the repo's CLAUDE.md code style section?
+2. Check for style: does it match the repo's AGENTS.md code style section?
 3. Check for duplication: is there existing code in this repo that does the same thing?
 4. Check for security: injection, auth bypass, secret exposure, SSRF
 5. Check for test coverage: are the changes tested? Are edge cases covered?
@@ -28,4 +28,4 @@ End with a verdict: PASS, PASS WITH NOTES, or FAIL.
 ## Notes
 
 - This is a general-purpose review skill. For deeper checks on specific concerns, use the dedicated critic files in `ai-rules/` (security.md, bugs.md, etc.).
-- Combine with repo-specific rules from `.cursor/rules/` or CLAUDE.md if available.
+- Combine with repo-specific rules from `.cursor/rules/` or AGENTS.md if available.
