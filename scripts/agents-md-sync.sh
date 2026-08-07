@@ -92,6 +92,12 @@ doc_dirs() {
 
 check() {
   local bad=0 mode path dir base sibling target
+  # Collected up front rather than piped in from a process substitution: under
+  # `set -e` a failure inside `< <(...)` is invisible to the parent shell, so a
+  # broken index would yield an empty loop and a false "OK". A plain assignment
+  # propagates the failure and aborts.
+  local docs
+  docs="$(list_docs)"
   while IFS="$(printf '\t')" read -r mode path; do
     [ -n "${path:-}" ] || continue
     dir="$(dirname "$path")"
@@ -124,7 +130,7 @@ check() {
         bad=$((bad + 1))
       fi
     fi
-  done < <(list_docs)
+  done <<<"$docs"
 
   if [ "$bad" -gt 0 ]; then
     echo
@@ -146,6 +152,10 @@ link_claude() {
 
 fix() {
   local changed=0 dir agents claude amode cmode
+  # Same reason as in check(): collect before looping so a failure is fatal
+  # rather than silently becoming "nothing to do".
+  local dirs
+  dirs="$(doc_dirs)"
   while IFS= read -r dir; do
     [ -n "${dir:-}" ] || continue
     agents="$(join_path "$dir" AGENTS.md)"
@@ -166,6 +176,12 @@ fix() {
         echo "  SKIP $agents: symlink targets \"$(symlink_target "$agents")\", not CLAUDE.md — resolve by hand"
         continue
       fi
+      # A dangling symlink: the CLAUDE.md holding the content is gone, so there is
+      # nothing to promote. Bail before the removals below destroy the symlink too.
+      if [ -z "$cmode" ]; then
+        echo "  SKIP $agents: symlink to CLAUDE.md, but no CLAUDE.md in the index — resolve by hand"
+        continue
+      fi
       git rm -q --cached "$agents" >/dev/null
       rm -f "$agents"
       git mv "$claude" "$agents"
@@ -183,8 +199,11 @@ fix() {
       echo "  added $claude symlink"
       changed=$((changed + 1))
     elif [ "$amode" = "100644" ] && [ "$cmode" = "100644" ]; then
-      # Both are real files. Only safe to collapse when they already agree.
-      if git diff --quiet --no-index -- "$agents" "$claude" 2>/dev/null; then
+      # Both are real files. Only safe to collapse when they already agree, judged
+      # on the indexed blobs: comparing working-tree files would read stale content
+      # under a sparse checkout or a staged-but-not-checked-out change, and
+      # collapsing on a false match loses whichever copy differs.
+      if [ "$(idx_field "$agents" 2)" = "$(idx_field "$claude" 2)" ]; then
         link_claude "$dir"
         echo "  collapsed duplicate $claude into a symlink"
         changed=$((changed + 1))
@@ -197,7 +216,7 @@ fix() {
       echo "  repointed $claude at AGENTS.md"
       changed=$((changed + 1))
     fi
-  done < <(doc_dirs)
+  done <<<"$dirs"
 
   if [ "$changed" -eq 0 ]; then
     echo "agents-md-sync: nothing to do."
