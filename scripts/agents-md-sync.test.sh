@@ -79,7 +79,7 @@ git rm -q --cached CLAUDE.md && rm -f CLAUDE.md
 git commit -qm "drop CLAUDE.md"
 out="$(bash "$SCRIPT" --fix 2>&1)"
 rc=$?
-want "fix exits 0 (skips rather than aborting)" 0 "$rc"
+want "fix reports failure rather than aborting mid-write" 1 "$rc"
 case "$out" in
   *"no CLAUDE.md in the index"*) ok "reports the skip" ;;
   *) bad "no skip message: $out" ;;
@@ -101,6 +101,8 @@ printf 'aaa\n' >AGENTS.md
 printf 'bbb\n' >CLAUDE.md
 git add -A && git commit -qm init
 out="$(bash "$SCRIPT" --fix 2>&1)"
+rc=$?
+want "exits non-zero: the invariant still is not met" 1 "$rc"
 case "$out" in
   *"merge them by hand"*) ok "refuses to guess a winner" ;;
   *) bad "expected a refusal: $out" ;;
@@ -155,6 +157,34 @@ printf 'z\n' >CLAUDE.md
 git add -A && git commit -qm init
 bash "$SCRIPT" --check >/dev/null 2>&1
 want "check fails on a non-symlink CLAUDE.md" 1 $?
+
+echo "== 12. executable AGENTS.md (mode 100755) is still collapsed, not skipped =="
+newrepo
+printf 'same\n' >AGENTS.md
+printf 'same\n' >CLAUDE.md
+chmod +x AGENTS.md
+git add -A && git commit -qm init
+want "precondition: AGENTS.md indexed as 100755" 100755 "$(mode_of AGENTS.md)"
+bash "$SCRIPT" --fix >/dev/null
+want "CLAUDE.md became a symlink" 120000 "$(mode_of CLAUDE.md)"
+bash "$SCRIPT" --check >/dev/null 2>&1
+want "check passes afterwards" 0 $?
+
+echo "== 13. --fix never reports success on a state it cannot handle =="
+newrepo
+printf 'a\n' >AGENTS.md
+printf 'b\n' >CLAUDE.md
+chmod +x AGENTS.md
+git add -A && git commit -qm init
+out="$(bash "$SCRIPT" --fix 2>&1)"
+case "$out" in
+  *"nothing to do"*) bad "claimed 'nothing to do' while --check still fails" ;;
+  *) ok "does not claim a clean result" ;;
+esac
+case "$out" in
+  *"merge them by hand"* | *"resolve by hand"*) ok "emits an actionable diagnostic" ;;
+  *) bad "no diagnostic for an unhandled state: $out" ;;
+esac
 
 echo "== 11. a git failure must never read as a clean result =="
 newrepo

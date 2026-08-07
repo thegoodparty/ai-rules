@@ -10,7 +10,9 @@
 #
 # Usage:
 #   agents-md-sync.sh --check    report violations, exit 1 if any (this is what CI runs)
-#   agents-md-sync.sh --fix      convert in place and stage the result; idempotent
+#   agents-md-sync.sh --fix      convert in place and stage the result; idempotent.
+#                                Exits 1 if any directory needed manual attention,
+#                                since --check would still fail on it.
 #
 # --check reads the git index rather than the working tree, so a CLAUDE.md that got
 # committed as a plain file (e.g. from a machine with core.symlinks=false) is still
@@ -30,6 +32,7 @@ usage: agents-md-sync.sh (--check | --fix)
   --check   Report every place where AGENTS.md is not the source of truth or
             CLAUDE.md is not a symlink to it. Exits 1 if anything is wrong.
   --fix     Rewrite the repo to satisfy the invariant and stage the changes.
+            Exits 1 if anything could not be resolved automatically.
 EOF
 }
 
@@ -78,6 +81,16 @@ join_path() {
   if [ "$1" = "." ]; then echo "$2"; else echo "$1/$2"; fi
 }
 
+# True for a tracked, non-symlink blob. Modes are taken from the index verbatim, so
+# this has to accept 100755 as well as 100644 — an agent doc that picked up the
+# executable bit is still a regular file holding content. 160000 is a gitlink.
+is_regular() {
+  case "${1:-}" in
+    "" | 120000 | 160000) return 1 ;;
+    *) return 0 ;;
+  esac
+}
+
 symlink_target() {
   local sha
   sha="$(idx_field "$1" 2)"
@@ -106,6 +119,9 @@ check() {
     if [ "$base" = "AGENTS.md" ]; then
       if [ "$mode" = "120000" ]; then
         echo "  $path: AGENTS.md is the source of truth and must be a regular file, not a symlink"
+        bad=$((bad + 1))
+      elif ! is_regular "$mode"; then
+        echo "  $path: AGENTS.md must be a regular file, found mode $mode"
         bad=$((bad + 1))
       fi
       sibling="$(join_path "$dir" CLAUDE.md)"
@@ -151,7 +167,7 @@ link_claude() {
 }
 
 fix() {
-  local changed=0 dir agents claude amode cmode
+  local changed=0 skipped=0 dir agents claude amode cmode
   # Same reason as in check(): collect before looping so a failure is fatal
   # rather than silently becoming "nothing to do".
   local dirs
@@ -164,7 +180,7 @@ fix() {
     cmode="$(idx_field "$claude" 1)"
 
     # Already correct.
-    if [ "$amode" = "100644" ] && [ "$cmode" = "120000" ] &&
+    if is_regular "$amode" && [ "$cmode" = "120000" ] &&
       [ "$(symlink_target "$claude")" = "AGENTS.md" ]; then
       continue
     fi
@@ -174,12 +190,14 @@ fix() {
       # the symlink, promote CLAUDE.md to AGENTS.md, and relink the other way.
       if [ "$(symlink_target "$agents")" != "CLAUDE.md" ]; then
         echo "  SKIP $agents: symlink targets \"$(symlink_target "$agents")\", not CLAUDE.md — resolve by hand"
+        skipped=$((skipped + 1))
         continue
       fi
       # A dangling symlink: the CLAUDE.md holding the content is gone, so there is
       # nothing to promote. Bail before the removals below destroy the symlink too.
       if [ -z "$cmode" ]; then
         echo "  SKIP $agents: symlink to CLAUDE.md, but no CLAUDE.md in the index — resolve by hand"
+        skipped=$((skipped + 1))
         continue
       fi
       git rm -q --cached "$agents" >/dev/null
@@ -198,7 +216,7 @@ fix() {
       link_claude "$dir"
       echo "  added $claude symlink"
       changed=$((changed + 1))
-    elif [ "$amode" = "100644" ] && [ "$cmode" = "100644" ]; then
+    elif is_regular "$amode" && is_regular "$cmode"; then
       # Both are real files. Only safe to collapse when they already agree, judged
       # on the indexed blobs: comparing working-tree files would read stale content
       # under a sparse checkout or a staged-but-not-checked-out change, and
@@ -209,19 +227,35 @@ fix() {
         changed=$((changed + 1))
       else
         echo "  SKIP $dir: AGENTS.md and CLAUDE.md are both real files with different content — merge them by hand"
+        skipped=$((skipped + 1))
       fi
     elif [ "$cmode" = "120000" ]; then
       # Symlink with the wrong target.
       link_claude "$dir"
       echo "  repointed $claude at AGENTS.md"
       changed=$((changed + 1))
+    else
+      # Nothing above matched, so --check would keep failing while --fix reported
+      # success. Say so instead of exiting silently, and name the modes so the
+      # state is diagnosable.
+      echo "  SKIP $dir: unhandled combination (AGENTS.md mode '${amode:-absent}', CLAUDE.md mode '${cmode:-absent}') — resolve by hand"
+      skipped=$((skipped + 1))
     fi
   done <<<"$dirs"
 
+  if [ "$changed" -gt 0 ]; then
+    echo "agents-md-sync: updated $changed director(ies); changes are staged."
+  fi
+
+  # Anything skipped means --check will still fail, so don't sign off as clean:
+  # a caller that runs --fix and sees success expects the invariant to hold.
+  if [ "$skipped" -gt 0 ]; then
+    echo "agents-md-sync: $skipped director(ies) need manual attention; the invariant is not satisfied yet."
+    return 1
+  fi
+
   if [ "$changed" -eq 0 ]; then
     echo "agents-md-sync: nothing to do."
-  else
-    echo "agents-md-sync: updated $changed director(ies); changes are staged."
   fi
 }
 
