@@ -1,6 +1,8 @@
-# Nested CLAUDE.md Template
+# Nested AGENTS.md Template
 
-Use this template for `CLAUDE.md` files inside subdirectories (e.g., `src/users/CLAUDE.md`). These give agents module-level context without reading the whole codebase. Keep under 80 lines.
+Use this template for `AGENTS.md` files inside subdirectories (e.g., `src/users/AGENTS.md`). These give agents module-level context without reading the whole codebase. Keep under 80 lines.
+
+Each nested `AGENTS.md` gets a `CLAUDE.md` symlink beside it, created by `ai-rules/scripts/agents-md-sync.sh --fix`.
 
 ---
 
