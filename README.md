@@ -110,6 +110,7 @@ Then invoke it: `@test-critic review the tests in this PR`
 | `code-duplication.md` | Duplication critic: search the codebase for existing code that does the same thing |
 | `performance.md` | Performance: real CPU cycles and roundtrips over Big-O, latency-adds, cache locality, allocations, render/network budgets |
 | `performance-tools.md` | Performance tooling cookbook: copy-paste commands for hyperfine, autocannon, `node --prof`, `EXPLAIN ANALYZE`, Lighthouse, bundle analysis |
+| `prompts.md` | Prompt critic: reviews changes to LLM prompts feeding user-facing features (unenforced guarantees, injection defenses, prompt-copy drift, output contracts, restricted data, safety language) |
 | `security.md` | Security: injection prevention, auth, secrets, dependencies, SSRF, cryptography |
 | `ts-engineer.md` | TypeScript type safety: prove types through narrowing, canonical types, boundary validation |
 
