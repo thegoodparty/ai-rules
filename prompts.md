@@ -117,7 +117,7 @@ Never delete or weaken a guardrail block, decline behavior, uncertainty permissi
 - Deleting "this is not legal advice; confirm with your county clerk or an attorney" from an instruction that walks users through compliance steps
 - Removing the model's permission to say "I don't know" from a factual-output prompt
 
-**What to do instead:** replacement lands in the same diff, at equal or greater strength; intentional loosening gets a PR callout, a re-run eval, and a human sign-off.
+**What to do instead:** replacement lands in the same diff, at equal or greater strength; intentional loosening gets a PR callout and a re-run eval.
 
 ---
 
