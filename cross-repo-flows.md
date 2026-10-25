@@ -8,15 +8,15 @@ Multi-repo sequences that AI agents need to understand when working on any singl
 
 **Trigger:** User signs up or creates a campaign on gp-webapp.
 
-**Repos:** gp-webapp → gp-api → election-api
+**Repos:** gp-webapp → gp-api
 
 **Sequence:**
 1. gp-webapp submits signup form via REST to gp-api (auth: JWT cookie).
 2. gp-api creates user + campaign records in Postgres.
-3. gp-api calls election-api to fetch matching election/candidacy data (internal HTTP).
+3. gp-api reads matching election/candidacy data from the election database (in process, through a second Prisma client).
 4. gp-api returns enriched campaign object to gp-webapp.
 
-**Contract:** `@goodparty_org/contracts` in gp-sdk defines shared types between gp-webapp and gp-api. gp-api → election-api uses internal HTTP.
+**Contract:** `@goodparty_org/contracts` in gp-sdk defines shared types between gp-webapp and gp-api.
 
 ---
 

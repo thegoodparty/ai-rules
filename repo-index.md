@@ -6,7 +6,6 @@ Status legend: ✓ = present in repo, — = not yet added (target).
 |------|----------|------|-----------|---------------------|
 | [gp-webapp](https://github.com/thegoodparty/gp-webapp) | TypeScript (Next.js) | User-facing frontend | — | — |
 | [gp-api](https://github.com/thegoodparty/gp-api) | TypeScript (NestJS) | Core backend API | — | — |
-| [election-api](https://github.com/thegoodparty/election-api) | TypeScript (NestJS) | Election & candidacy data API | — | — |
 | [people-api](https://github.com/thegoodparty/people-api) | TypeScript (NestJS) | Voter file API | — | — |
 | [campaign-plan-service](https://github.com/thegoodparty/campaign-plan-service) | TypeScript (NestJS) | Async campaign plan generation | — | — |
 | [gp-data-platform](https://github.com/thegoodparty/gp-data-platform) | Python (uv) | ETL & data pipelines | — | — |
