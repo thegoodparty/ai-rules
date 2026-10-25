@@ -6,7 +6,7 @@ How GoodParty's services connect. Arrow direction = "calls / depends on". The ed
    gp-webapp              ── REST (JWT cookie) ──▶  gp-api
    gp-sdk                 ── shared TS types  ──▶  gp-api  (compile-time only)
 
-   gp-api                 ── HTTP (internal)   ──▶  election-api
+   gp-api                 ── Postgres (read)   ──▶  election DB
    gp-api                 ── HTTP (S2S JWT)    ──▶  people-api
    gp-api                 ── HTTP (internal)   ──▶  gp-ai-projects
 
@@ -24,7 +24,7 @@ How GoodParty's services connect. Arrow direction = "calls / depends on". The ed
 | From | To | Protocol | Auth | Notes |
 |------|----|----------|------|-------|
 | gp-webapp | gp-api | REST | JWT cookie | All user-facing API calls |
-| gp-api | election-api | HTTP | Internal | Election/candidacy data |
+| gp-api | election DB | Postgres | DB credentials | Election/candidacy data, read in process |
 | gp-api | people-api | HTTP | S2S JWT (`PEOPLE_API_S2S_SECRET`) | Voter file lookups |
 | gp-api | campaign-plan-service | SQS FIFO | IAM | Trigger plan generation |
 | campaign-plan-service | gp-api | SQS FIFO | IAM | Status callbacks |
