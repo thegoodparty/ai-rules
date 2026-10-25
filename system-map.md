@@ -36,4 +36,4 @@ How GoodParty's services connect. Arrow direction = "calls / depends on". The ed
 
 ## Repo count
 
-10 active repos. Stale repos (Voter-file-ETL, gp-styles, gp-sanity, gp-serve) are out of scope.
+9 active repos. Stale repos (Voter-file-ETL, gp-styles, gp-sanity, gp-serve) are out of scope.
