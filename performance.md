@@ -244,7 +244,7 @@ Node.js (and the browser) runs your JS on one thread. Any synchronous CPU work b
 **What to do instead:**
 - Use the async variants of every Node API (`fs.promises`, `bcrypt.hash`, `crypto.pbkdf2`)
 - Stream large payloads instead of buffering (`createReadStream` → pipe)
-- For unavoidable CPU work, move to a Worker thread or a queue
+- For CPU work that grows with its input, take it off the request path: run it in a queue job, or compute it when its inputs change and store the result
 - For long iterations, break work into chunks with `setImmediate` / `await new Promise(r => setImmediate(r))` to let the loop breathe
 - Test regexes against pathological inputs; prefer linear-time engines (e.g., `re2`) for user-supplied patterns
 
@@ -314,7 +314,8 @@ Every `'use client'` directive forces the file *and everything it imports* into 
 
 **What to do instead:**
 - Treat the `'use client'` directive as a packaging decision, not a hint. Place it on the smallest possible leaf component.
-- Lift data fetching, secrets, and Node-only modules into the parent server component. Pass plain serializable props down.
+- Keep secrets and Node-only modules in server code. Pass plain serializable props down.
+- In the signed-in product app (gp-webapp), don't move a page's data fetching into the server render. Fetch from the API in the browser, so the page renders at once even when the API is slow. Public pages that need server rendering for search (gp-marketing, candidate sites) are the exception.
 - For a heavy dep used only in a small interaction (e.g., a date picker), wrap the interactive piece in `dynamic(() => import(...), { ssr: false })` so it's lazy-loaded.
 - If the same file mixes `'use client'` and `async function` server components, that's an architecture bug — split the file.
 
@@ -339,27 +340,25 @@ Bandwidth is cheap; latency is not. One 100 KB response is usually faster than t
 - Provide aggregate / batch endpoints for the screens that need many resources
 - Use HTTP keep-alive and a shared connection pool (`undici` Agent, `http.Agent({ keepAlive: true })`)
 - Set explicit timeouts on every outbound call (`AbortSignal.timeout(2000)`)
-- Cache idempotent reads at the right layer (HTTP cache, CDN, in-memory LRU with TTL)
-- For high-fanout reads to the same key, use request coalescing (single-flight)
 
 ---
 
-## 10. Cache correctly or not at all
+## 10. Don't cache by default
 
-A bad cache returns stale data confidently — that's worse than a slow request.
+A cache is a second copy of the truth that goes stale on its own schedule, and it usually hides a slowness that should be fixed instead: a missing index, an N+1, or work done on every read that could be done once when the inputs change.
 
 **Violations:**
-- Caching mutable user-specific data in a process-wide map without an invalidation strategy
-- TTL chosen by guess, never revisited; no metrics on hit rate
-- Caching without a key that includes everything the result depends on (user, role, locale, tenant, version)
-- "Stampede" on cache miss: 1000 concurrent requests all rebuilding the same value
+- A new cache held in server memory across requests: a module- or service-level `Map`, an LRU, a memoize with a TTL, request coalescing. Our servers run as several replicas, so each one holds its own copy, hits are rare, and the copies disagree.
+- A new cache service (Redis, Memcached) or caching library added to speed up a read
+- A cache added before anyone measured and fixed why the read is slow
 
 **What to do instead:**
-- Cache pure, expensive, frequently-read derivations — not raw mutable rows
-- Pick the cache layer to match the invalidation story: in-memory for per-process derived data, Redis for shared, HTTP/CDN for public
-- Include every variant dimension in the cache key
-- Use single-flight / request coalescing on misses
-- Track hit rate. A cache below ~80% hit rate on a hot key is probably misconfigured.
+- Make the read fast: fix the query, add the index, batch the roundtrips.
+- If a result is expensive to compute and read often, compute it when its inputs change and store it in the database, with the inputs it was computed from.
+- Caching the framework or platform already provides with no code of our own (Next.js built-in caching, HTTP cache headers, a CDN) is fine.
+
+**Critic checks:**
+- For any new `Map`, LRU or memoized value that lives across requests in server code: if it is a cache, FAIL and point to fixing the read or storing the result.
 
 ---
 
